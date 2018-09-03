@@ -35,21 +35,7 @@ public class MiaoShaUserService {
     public static final String COOKIE_NAME_TOKEN = "token";
 
     public MiaoShaUser getById(long id) {
-        /**
-         * 取缓存
-         */
-        MiaoShaUser user = redisService.get(UserKey.getById, id + "", MiaoShaUser.class);
-        if (user != null) {
-            return user;
-        }
-        /**
-         * 取数据库
-         */
-        user = miaoShaUserDao.getById(id);
-        if (user != null) {
-            redisService.set(UserKey.getById, id + "", user);
-        }
-        return user;
+        return miaoShaUserDao.getById(id);
     }
 
     public boolean updatePassword(long id, String newPassword) {
@@ -109,7 +95,6 @@ public class MiaoShaUserService {
         cookie.setMaxAge(MiaosShaUserKey.getByToken.expireSeconds);
         cookie.setPath("/");
         response.addCookie(cookie);
-        System.out.println(cookie.getName() + "," + cookie.getValue());
 
     }
 
@@ -120,7 +105,7 @@ public class MiaoShaUserService {
         MiaoShaUser user = redisService.get(MiaosShaUserKey.getByToken, token, MiaoShaUser.class);
         //  延长有效期
         if (user != null) {
-            this.addCookie(response, token, user);
+            addCookie(response, token, user);
         }
         return user;
     }

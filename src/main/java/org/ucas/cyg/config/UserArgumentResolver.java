@@ -14,8 +14,6 @@ import org.ucas.cyg.service.MiaoShaUserService;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.lang.reflect.Parameter;
-import java.util.concurrent.locks.Condition;
 
 /**
  * @Author: yunguan cheng
@@ -39,10 +37,11 @@ public class UserArgumentResolver implements HandlerMethodArgumentResolver {
     public Object resolveArgument(MethodParameter methodParameter, ModelAndViewContainer modelAndViewContainer, NativeWebRequest nativeWebRequest, WebDataBinderFactory webDataBinderFactory) throws Exception {
         HttpServletRequest request = nativeWebRequest.getNativeRequest(HttpServletRequest.class);
         HttpServletResponse response = nativeWebRequest.getNativeResponse(HttpServletResponse.class);
+
         String paramToken = request.getParameter(MiaoShaUserService.COOKIE_NAME_TOKEN);
         String cookieToken = this.getCookieValue(request, MiaoShaUserService.COOKIE_NAME_TOKEN);
         if (StringUtils.isEmpty(cookieToken) && StringUtils.isEmpty(paramToken)) {
-            return null;
+            response.sendRedirect("/login/to_login");
         }
         String token = StringUtils.isEmpty(paramToken) ? cookieToken : paramToken;
         return miaoShaUserService.getByToken(response, token);

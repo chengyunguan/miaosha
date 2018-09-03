@@ -1,12 +1,11 @@
 package org.ucas.cyg.service;
 
-import org.junit.Ignore;
+import jdk.nashorn.internal.ir.annotations.Ignore;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.ucas.cyg.ApplicationTests;
 import org.ucas.cyg.domain.MiaoShaUser;
 
-import static org.junit.Assert.*;
 
 /**
  * @Author: yunguan cheng
@@ -17,6 +16,7 @@ public class MiaoShaUserServiceTest extends ApplicationTests {
 
     @Autowired
     private MiaoShaUserService miaoShaUserService;
+
     @Test
     @Ignore
     public void getById() {
