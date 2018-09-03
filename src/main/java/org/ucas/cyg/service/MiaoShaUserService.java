@@ -35,8 +35,23 @@ public class MiaoShaUserService {
     public static final String COOKIE_NAME_TOKEN = "token";
 
     public MiaoShaUser getById(long id) {
-        return miaoShaUserDao.getById(id);
+        /**
+         * 取缓存
+         */
+        MiaoShaUser user = redisService.get(UserKey.getById, id + "", MiaoShaUser.class);
+        if (user != null) {
+            return user;
+        }
+        /**
+         * 取数据库
+         */
+        user = miaoShaUserDao.getById(id);
+        if (user != null) {
+            redisService.set(UserKey.getById, id + "", user);
+        }
+        return user;
     }
+
 
     public boolean updatePassword(long id, String newPassword) {
         /**

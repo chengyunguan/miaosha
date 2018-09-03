@@ -46,27 +46,40 @@ public class GoodsController {
     @Autowired
     private ApplicationContext applicationContext;
 
-    @RequestMapping(value = "/to_list")
-    public String list(Model model, MiaoShaUser user) {
+    @RequestMapping(value = "/to_list", produces = "text/html")
+    @ResponseBody
+    public String list(HttpServletRequest request, HttpServletResponse response, Model model, MiaoShaUser user) {
         model.addAttribute("user", user);
         List<GoodsVo> goodsList = goodsService.listGoodsVo();
         model.addAttribute("goodsList", goodsList);
-        return "goods_list";
+        /**
+         * 取缓存
+         */
+        String html = redisService.get(GoodsKey.getGoodsList, "", String.class);
+        if (StringUtils.isNoneEmpty(html)) {
+            return html;
+        }
+        /**
+         * 手动渲染
+         */
+        SpringWebContext ctx = new SpringWebContext(request, response, request.getServletContext(),
+                request.getLocale(), model.asMap(), applicationContext);
+        html = thymeleafViewResolver.getTemplateEngine().process("goods_list", ctx);
+        if (StringUtils.isNotEmpty(html)) {
+            redisService.set(GoodsKey.getGoodsDetail, "", html);
+        }
+        return html;
     }
 
     @RequestMapping("/to_detail/{goodsId}")
-    public String detail(Model model, MiaoShaUser user, @PathVariable("goodsId") long goodsId) {
+    @ResponseBody
+    public String detail(HttpServletRequest request, HttpServletResponse response, Model model, MiaoShaUser user, @PathVariable("goodsId") long goodsId) {
         model.addAttribute("user", user);
         GoodsVo goods = goodsService.getGoodsVoByGoodsId(goodsId);
         model.addAttribute("goods", goods);
-        System.out.println("goodsId:" + goodsId);
-        System.out.println("goods:" + goods);
-        System.out.println("user:" + user);
-
         long startTime = goods.getStartDate().getTime();
         long endTime = goods.getEndDate().getTime();
         long now = System.currentTimeMillis();
-
         int miaoshaStatus = 0;
         int remainSeconds = 0;
         if (now < startTime) {
@@ -85,6 +98,22 @@ public class GoodsController {
         model.addAttribute("miaoshaStatus", miaoshaStatus);
         model.addAttribute("remainSeconds", remainSeconds);
 
-        return "goods_detail";
+        /**
+         * 取缓存
+         */
+        String html = redisService.get(GoodsKey.getGoodsDetail, goodsId + "", String.class);
+        if (StringUtils.isNotEmpty(html)) {
+            return html;
+        }
+        /**
+         * 手动渲染
+         */
+        SpringWebContext ctx = new SpringWebContext(request, response, request.getServletContext(),
+                request.getLocale(), model.asMap(), applicationContext);
+        html = thymeleafViewResolver.getTemplateEngine().process("goods_detail", ctx);
+        if (StringUtils.isNotEmpty(html)) {
+            redisService.set(GoodsKey.getGoodsDetail, goodsId + "", html);
+        }
+        return html;
     }
 }
