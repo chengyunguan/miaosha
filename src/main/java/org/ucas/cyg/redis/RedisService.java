@@ -170,4 +170,21 @@ public class RedisService {
             jedis.close();
         }
     }
+
+    /**
+     * 删除
+     * @param keyPrefix
+     * @param key
+     * @return
+     */
+    public boolean delete(UserKey keyPrefix, String key) {
+        Jedis jedis = null;
+        try {
+            String realKey = keyPrefix.getPrefix() + key;
+            jedis = jedisPool.getResource();
+            return jedis.del(realKey) > 0;
+        } finally {
+            returnToPool(jedis);
+        }
+    }
 }

@@ -8,6 +8,7 @@ import org.ucas.cyg.domain.MiaoShaUser;
 import org.ucas.cyg.exception.GlobleException;
 import org.ucas.cyg.redis.MiaosShaUserKey;
 import org.ucas.cyg.redis.RedisService;
+import org.ucas.cyg.redis.UserKey;
 import org.ucas.cyg.result.CodeMsg;
 import org.ucas.cyg.util.MD5Util;
 import org.ucas.cyg.util.UUIDUtil;
@@ -34,7 +35,45 @@ public class MiaoShaUserService {
     public static final String COOKIE_NAME_TOKEN = "token";
 
     public MiaoShaUser getById(long id) {
-        return miaoShaUserDao.getById(id);
+        /**
+         * 取缓存
+         */
+        MiaoShaUser user = redisService.get(UserKey.getById, id + "", MiaoShaUser.class);
+        if (user != null) {
+            return user;
+        }
+        /**
+         * 取数据库
+         */
+        user = miaoShaUserDao.getById(id);
+        if (user != null) {
+            redisService.set(UserKey.getById, id + "", user);
+        }
+        return user;
+    }
+
+    public boolean updatePassword(long id, String newPassword) {
+        /**
+         * 取user
+         */
+        MiaoShaUser user = getById(id);
+        if (user == null) {
+            throw new GlobleException(CodeMsg.MOBILE_NOT_EXIST);
+        }
+        /**
+         * 更新数据库
+         */
+        MiaoShaUser tobeUpdate = new MiaoShaUser();
+        tobeUpdate.setId(id);
+        tobeUpdate.setPassword(newPassword);
+        miaoShaUserDao.update(tobeUpdate);
+        /**
+         * 更新缓存
+         */
+        redisService.delete(UserKey.getById, "" + id);
+        user.setPassword(tobeUpdate.getPassword());
+        redisService.set(UserKey.getById, "" + id, user);
+        return true;
     }
 
     public boolean login(HttpServletResponse response, LoginVo loginVo) {
